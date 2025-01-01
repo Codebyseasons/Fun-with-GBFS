@@ -124,6 +124,73 @@ resource "aws_iam_role_policy_attachment" "ec2_rds_attach" {
   policy_arn = aws_iam_policy.ec2_rds_policy.arn
 }
 
+# Security Group for EC2
+resource "aws_security_group" "ec2_sg" {
+  name        = "ec2-security-group"
+  description = "Allow SSH and Grafana access"
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # SSH access (restrict to your IP in production)
+  }
+
+  ingress {
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # Grafana access
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# EC2 Instance to run Grafana and Shell Script
+resource "aws_instance" "grafana_instance" {
+  ami                         = "ami-0c02fb55956c7d316" # Amazon Linux 2 AMI
+  instance_type               = "t2.micro"
+  security_groups             = [aws_security_group.ec2_sg.name]
+  iam_instance_profile        = aws_iam_instance_profile.ec2_role.name
+  associate_public_ip_address = true
+  user_data                   = <<-EOT
+    #!/bin/bash
+    yum update -y
+    amazon-linux-extras enable grafana
+    yum install -y grafana jq
+    systemctl enable --now grafana-server
+
+    # Setup script to run every 10 minutes
+    echo "*/10 * * * * root /home/ec2-user/sql.sh" >> /etc/crontab
+  EOT
+
+  tags = {
+    Name = "GrafanaInstance"
+  }
+}
+
+# IAM Instance Profile for EC2
+resource "aws_iam_instance_profile" "ec2_role" {
+  name = "ec2-instance-profile"
+  role = aws_iam_role.ec2_role.name
+}
+
+# Output the Grafana URL
+output "grafana_url" {
+  value = "http://${aws_instance.grafana_instance.public_ip}:3000"
+}
+
+# Output the EC2 Instance Public IP
+output "ec2_public_ip" {
+  value = aws_instance.grafana_instance.public_ip
+}
+
+
 # Output the RDS endpoint
 output "db_instance_endpoint" {
   value = aws_rds_cluster.postgresql_cluster.endpoint
