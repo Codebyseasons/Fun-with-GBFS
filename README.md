@@ -1,75 +1,101 @@
-# Fun-with-GBFS
-1. File: main.tf
-This appears to be a Terraform configuration file. Although its contents are not displayed here, Terraform files (.tf) typically define infrastructure resources and configurations for cloud providers such as AWS, Azure, or Google Cloud.
+Overview
 
-Common elements in such files:
+The files work together to provision infrastructure, manage its state, and automate interactions with PostgreSQL databases and APIs:
 
-Providers: Define the cloud provider to use (e.g., provider "aws" {}).
-Resources: Specify the infrastructure components to create (e.g., VMs, databases, or networks).
-Variables: Allow parameterization for reusable configurations.
-Outputs: Provide information after execution, such as IPs or resource IDs.
-To document this file:
+main.tf: A Terraform configuration file for provisioning cloud resources.
 
-Purpose: Identify the infrastructure components and their roles.
-Key Elements: Highlight any variables, resources, or outputs.
-Usage: Include instructions on running this configuration (e.g., terraform init, terraform apply).
+sql.sh: A Bash script for database initialization and API data management.
 
-2. File: sql.sh
-This is a Bash script for managing and interacting with a PostgreSQL database, retrieving API data, and storing it into the database.
+terraform.tfstate and terraform.tfstate.backup: Terraform state files to track and manage the infrastructure.
 
-Main Functions:
+Workflow Summary
 
-Secrets Retrieval: Fetches database credentials from AWS Secrets Manager.
-Database Initialization: Creates tables (api_data, historical_data) to store API information and historical logs.
-API Data Processing:
-Fetches data from multiple APIs.
-Updates the last_updated field in the database.
-Stores historical data for reference.
-Reusable Helper Functions: Handles database queries, fetches JSON data from APIs, and manages database connections.
-Key APIs Included:
+Use main.tf to provision infrastructure, including a PostgreSQL database.
 
-Bird Basel
-Ridedott Brussels
-Neuron YCC
+Use terraform.tfstate to verify the current state of the resources.
 
-Usage: Instructions to execute (e.g., bash sql.sh).
-Dependencies: List required tools (AWS CLI, PostgreSQL, jq, etc.).
-Environment Variables: Include required configurations (e.g., AWS credentials, database endpoint).
-Error Handling: Document failure cases (e.g., secret retrieval failure).
+Run sql.sh to initialize the database schema and process API data.
 
-3. File: terraform.tfstate and terraform.tfstate.backup
-These are Terraform state files, which track the current state of the deployed infrastructure. They are essential for:
+1. main.tf
 
-Synchronizing State: Ensure Terraform knows the real-world infrastructure state.
-Collaboration: Share infrastructure status among team members.
-Rollback: Act as a backup for potential troubleshooting.
+The main.tf file contains Terraform configuration code to provision cloud resources. It works as follows:
 
-Caution:
-These files often contain sensitive data (e.g., credentials or resource identifiers). Avoid sharing them publicly.
-Documentation Suggestions:
+Key Components:
 
-Purpose: Explain the importance of state files in Terraform operations.
-Best Practices: Secure storage (e.g., use Terraform Cloud or remote backends like S3).
-Do Not Edit: Warn against manual modifications.
-Versioning: Keep backups (like terraform.tfstate.backup) for recovery.
+Provider Setup: Specifies the cloud provider and its credentials.
 
+Resource Definitions: Likely includes resources such as RDS instances or networking components.
 
-Purpose of Each File
-main.tf: Defines the infrastructure as code for resource provisioning.
-sql.sh: A script to manage PostgreSQL databases and process data from APIs.
-terraform.tfstate and .backup: Terraform state files for tracking infrastructure.
-How to Use the Provided Files
-Set Up Infrastructure:
+Variables and Outputs: Parameters and outputs for reusable and accessible configurations.
 
-Initialize Terraform (terraform init).
-Review the configuration in main.tf to understand the infrastructure.
-Apply the configuration (terraform apply).
-Run the Bash Script:
+Usage:
 
-Install required dependencies (jq, AWS CLI, PostgreSQL tools).
-Ensure environment variables and secrets are configured.
-Execute sql.sh to initialize the database and process API data.
-Manage State Files:
+Initialize Terraform: terraform init
 
-Store terraform.tfstate securely (e.g., encrypt or use a remote backend).
-Use terraform plan and terraform apply commands for infrastructure updates.
+Plan and Apply Changes: terraform plan && terraform apply
+
+Track state in terraform.tfstate and terraform.tfstate.backup.
+
+2. sql.sh
+
+The sql.sh script automates interactions with PostgreSQL and APIs. Its functionality includes:
+
+Key Operations:
+
+AWS Secrets Manager: Fetches database credentials securely.
+
+Database Initialization: Creates necessary PostgreSQL tables (api_data, historical_data).
+
+API Processing: Fetches and stores API data, updating and tracking changes.
+
+Execution Flow:
+
+Retrieves database credentials.
+
+Initializes the database schema.
+
+Processes APIs to update data in the database.
+
+Dependencies:
+
+Tools: bash, curl, jq, AWS CLI, and PostgreSQL client (psql).
+
+Environment Setup: Requires AWS access and PostgreSQL connection details.
+
+3. terraform.tfstate and terraform.tfstate.backup
+
+State files that track Terraform-managed resources.
+
+Key Details:
+
+Primary State File: terraform.tfstate contains live infrastructure state.
+
+Backup: terraform.tfstate.backup is the last known good state before changes.
+
+Notes:
+
+Sensitive: Avoid manual edits or committing to version control.
+
+Secure with access controls and consider remote backends for state management.
+
+File Interactions
+
+Provisioning with main.tf:
+
+Creates infrastructure like a PostgreSQL database used by sql.sh.
+
+State Tracking:
+
+terraform.tfstate reflects changes from main.tf.
+
+Database and API Automation with sql.sh:
+
+Uses the database provisioned in main.tf to manage API data and updates.
+
+Workflow:
+
+Provision infrastructure using main.tf.
+
+Confirm resource creation using terraform.tfstate.
+
+Run sql.sh to initialize and populate the database.
