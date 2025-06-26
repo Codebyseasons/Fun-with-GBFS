@@ -195,3 +195,4 @@ output "ec2_public_ip" {
 output "db_instance_endpoint" {
   value = aws_rds_cluster.postgresql_cluster.endpoint
 }
+}
